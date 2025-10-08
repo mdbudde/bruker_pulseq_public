@@ -1,0 +1,49 @@
+name: Auto-invite approved requesters
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  invite:
+    if: contains(github.event.label.name, 'approved') && contains(github.event.issue.labels.*.name, 'request-access')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: read
+    steps:
+      - name: Extract username from Issue Form body
+        id: parse
+        run: |
+          # Pull the "GitHub username" field value from the issue body
+          body=$(jq -r '.issue.body' <(echo '${{ toJson(github.event) }}'))
+          # Issue Forms render as Markdown; find the line after the field label
+          # Fallback regex: first word-like token after a heading/label
+          username=$(echo "$body" | sed -n 's/.*GitHub username.*\n\([[:alnum:]-]\+\).*/\1/p' | head -n1)
+          if [ -z "$username" ]; then
+            # Alternative: grab first token-looking handle in the body
+            username=$(echo "$body" | grep -oE '^[[:alnum:]-]{1,39}$' | head -n1)
+          fi
+          if [ -z "$username" ]; then
+            echo "Could not parse username"; exit 1
+          fi
+          echo "username=$username" >> $GITHUB_OUTPUT
+
+      - name: Invite user as collaborator to private repo
+        env:
+          GH_TOKEN: ${{ secrets.INVITER_TOKEN }}
+          OWNER: mdbudde
+          PRIVATE_REPO: bruker_pulseq_private
+        run: |
+          # This creates an invitation if not already a collaborator.
+          gh api \
+            -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            /repos/mdbudde/bruker_pulseq_private/collaborators/${{ steps.parse.outputs.username }} \
+            -f permission=push
+
+      - name: Comment back on the request
+        env:
+          GH_TOKEN: ${{ secrets.INVITER_TOKEN }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --body "✅ Invitation sent to **${{ steps.parse.outputs.username }}**. Please check your email/GitHub notifications."
