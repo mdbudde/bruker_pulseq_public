@@ -11,17 +11,17 @@ body:
       placeholder: octocat
     validations:
       required: true
-  - type: textarea
+  - type: input
     id: institution
     attributes:
       label: Institution
-      placeholder: 
+      placeholder: Institutional information
     validations:
       required: true
-  - type: textarea
+  - type: input
     id: reason
     attributes:
       label: Additional Details (optional)
-      placeholder: e.g., pulseq users, sequence developer, etc...
+      placeholder: e.g., pulseq user, sequence developer, etc...
     validations:
       required: false
