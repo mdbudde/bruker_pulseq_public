@@ -12,10 +12,16 @@ body:
     validations:
       required: true
   - type: textarea
-    id: reason
+    id: institution
     attributes:
-      label: Details (optional)
-      description: Institution; bruker developer or user?
-      placeholder: e.g., collaborator on project X
+      label: Institution
+      placeholder: 
     validations:
       required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Additional Details (optional)
+      placeholder: e.g., pulseq users, sequence developer, etc...
+    validations:
+      required: false
